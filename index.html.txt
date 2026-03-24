@@ -1,0 +1,230 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFLOR | Simulador de ROI Corporativo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        :root { --navy: #0f1e2d; --green: #22c55e; --slate: #94a3b8; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--navy); color: white; overflow-x: hidden; }
+        .sidebar { background: #0c1621; border-right: 1px solid #1a2f42; }
+        .card-aflor { background: #152536; border: 1px solid #1a2f42; border-radius: 12px; transition: 0.3s; }
+        .input-aflor { background: #1a2f42; border: 1px solid #2d4458; color: white; border-radius: 6px; padding: 8px 12px; width: 100%; outline: none; }
+        .input-aflor:focus { border-color: var(--green); }
+        .btn-primary { background: var(--green); color: #0f1e2d; font-weight: 700; border-radius: 8px; transition: 0.3s; }
+        .btn-primary:hover { background: #16a34a; transform: translateY(-2px); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row">
+
+
+    <aside class="w-full md:w-96 p-6 sidebar flex flex-col gap-5 overflow-y-auto">
+        <div>
+            <h1 class="text-2xl font-bold text-white"><span class="text-green-500">AFLOR</span> ROI</h1>
+            <p class="text-xs text-slate-400 uppercase tracking-widest">Dimensionamento Operacional</p>
+        </div>
+
+
+        <div class="space-y-4">
+            <h3 class="text-xs font-bold text-green-500 border-b border-green-900/30 pb-1">EQUIPE E CUSTOS</h3>
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Nº de Colaboradores</label>
+                <input id="colab" type="number" value="10" class="input-aflor">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Salário Médio (R$)</label>
+                <input id="salario" type="number" value="3242" class="input-aflor">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Dias de Operação / Mês</label>
+                <input id="dias" type="number" value="22" class="input-aflor">
+            </div>
+
+
+            <h3 class="text-xs font-bold text-green-500 border-b border-green-900/30 pb-1 mt-4">PERDAS MANUAIS (MINUTOS/DIA)</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Transporte Papel</label>
+                    <input id="minTransp" type="number" value="30" class="input-aflor">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Digitalização</label>
+                    <input id="minDigit" type="number" value="60" class="input-aflor">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Rastreamento</label>
+                    <input id="minRastreio" type="number" value="30" class="input-aflor">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Relatórios</label>
+                    <input id="minRelat" type="number" value="30" class="input-aflor">
+                </div>
+            </div>
+            
+            <h3 class="text-xs font-bold text-green-500 border-b border-green-900/30 pb-1 mt-4">INSUMOS</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Formulários/Dia</label>
+                    <input id="numForm" type="number" value="3" class="input-aflor">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Custo/Form (R$)</label>
+                    <input id="custoForm" type="number" value="1.30" step="0.10" class="input-aflor">
+                </div>
+            </div>
+        </div>
+
+
+        <button onclick="calcular()" class="btn-primary w-full py-4 mt-4 shadow-lg shadow-green-500/20">
+            <i class="fa-solid fa-chart-pie mr-2"></i> GERAR DIAGNÓSTICO
+        </button>
+
+
+        <button onclick="downloadHTML()" class="text-[10px] text-slate-500 hover:text-white transition text-center underline">
+            Exportar Dashboard como Arquivo HTML
+        </button>
+    </aside>
+
+
+    <main class="flex-1 p-8 overflow-y-auto">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="card-aflor p-5 border-l-4 border-green-500">
+                <p class="text-slate-400 text-[10px] font-bold uppercase">Ganho Líquido Anual</p>
+                <h2 id="ganhoAnual" class="text-2xl font-bold text-white">R$ 0,00</h2>
+            </div>
+            <div class="card-aflor p-5">
+                <p class="text-slate-400 text-[10px] font-bold uppercase">ROI Mensal</p>
+                <h2 id="roi" class="text-2xl font-bold text-green-500">0%</h2>
+            </div>
+            <div class="card-aflor p-5">
+                <p class="text-slate-400 text-[10px] font-bold uppercase">Custo Evitado</p>
+                <h2 id="evitado" class="text-2xl font-bold text-blue-400">0%</h2>
+            </div>
+            <div class="card-aflor p-5">
+                <p class="text-slate-400 text-[10px] font-bold uppercase">Payback</p>
+                <h2 id="payback" class="text-2xl font-bold text-yellow-500">0 m</h2>
+            </div>
+        </div>
+
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="card-aflor p-6">
+                <h3 class="text-xs font-bold text-slate-400 mb-6 uppercase">Custo Manual vs AFLOR (Mensal)</h3>
+                <div class="h-72"><canvas id="roiChart"></canvas></div>
+            </div>
+            <div class="card-aflor p-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-5"><i class="fa-solid fa-quote-right text-6xl"></i></div>
+                <h3 class="text-green-500 font-bold mb-6 flex items-center gap-2 uppercase text-sm">
+                    <i class="fa-solid fa-lightbulb"></i> Narrativa Comercial
+                </h3>
+                <div id="story" class="text-slate-300 leading-relaxed text-lg space-y-4">
+                    </div>
+            </div>
+        </div>
+    </main>
+
+
+    <script>
+        let myChart;
+
+
+        function calcular() {
+            // Entradas
+            const n = parseFloat(document.getElementById("colab").value);
+            const salario = parseFloat(document.getElementById("salario").value);
+            const dias = parseFloat(document.getElementById("dias").value);
+            const custoHora = salario / 220;
+            const custoMinuto = custoHora / 60;
+
+
+            // Perdas Manuais (Base Planilha)
+            const custoPapel = (n * parseFloat(document.getElementById("numForm").value) * parseFloat(document.getElementById("custoForm").value)) * dias;
+            const tempoTransporte = n * parseFloat(document.getElementById("minTransp").value) * custoMinuto * dias;
+            const tempoDigitalizacao = n * parseFloat(document.getElementById("minDigit").value) * custoMinuto * dias;
+            const tempoRastreio = n * parseFloat(document.getElementById("minRastreio").value) * custoMinuto * dias;
+            const tempoRelatorio = n * parseFloat(document.getElementById("minRelat").value) * custoMinuto * dias;
+
+
+            const custoManualTotal = custoPapel + tempoTransporte + tempoDigitalizacao + tempoRastreio + tempoRelatorio;
+
+
+            // Preços AFLOR (Base Tabela ROI fornecida)
+            let aflor = 0;
+            if (n === 1) aflor = 550;
+            else if (n === 2) aflor = 650;
+            else if (n === 3) aflor = 750;
+            else if (n === 4) aflor = 850;
+            else aflor = n * 185; // Acima de 4 conforme solicitado
+
+
+            const economiaMensal = custoManualTotal - aflor;
+            const roi = (economiaMensal / aflor) * 100;
+            const ganhoAnual = economiaMensal * 12;
+            const custoEvitadoPerc = (economiaMensal / custoManualTotal) * 100;
+            const payback = aflor / economiaMensal;
+
+
+            // UI
+            document.getElementById("ganhoAnual").innerText = ganhoAnual.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+            document.getElementById("roi").innerText = roi.toFixed(1) + "%";
+            document.getElementById("evitado").innerText = custoEvitadoPerc.toFixed(1) + "%";
+            document.getElementById("payback").innerText = payback.toFixed(2) + " meses";
+
+
+            // Storytelling
+            document.getElementById("story").innerHTML = `
+                <p>Hoje, sua ineficiência operacional custa <b class="text-red-400">R$ ${custoManualTotal.toLocaleString('pt-BR', {minimumFractionDigits:2})} por mês</b>.</p>
+                <p>Com a <b>AFLOR</b>, você substitui papel e retrabalho por um investimento de <b class="text-green-400">R$ ${aflor.toLocaleString('pt-BR', {minimumFractionDigits:2})}</b>.</p>
+                <p>A cada R$ 1 investido, você retorna <b class="text-white">R$ ${(economiaMensal/aflor).toFixed(1)}</b> direto para o seu caixa, totalizando <b class="text-green-500">R$ ${ganhoAnual.toLocaleString('pt-BR', {maximumFractionDigits:0})}</b> de lucro líquido no primeiro ano.</p>
+            `;
+
+
+            updateChart(custoManualTotal, aflor);
+        }
+
+
+        function updateChart(manual, aflor) {
+            const ctx = document.getElementById('roiChart').getContext('2d');
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['PROCESSO MANUAL', 'AFLOR'],
+                    datasets: [{
+                        data: [manual, aflor],
+                        backgroundColor: ['#ef4444', '#22c55e'],
+                        borderRadius: 6,
+                        barThickness: 60
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                        x: { grid: { display: false }, ticks: { color: 'white', font: { weight: 'bold' } } }
+                    }
+                }
+            });
+        }
+
+
+        function downloadHTML() {
+            const html = document.documentElement.outerHTML;
+            const blob = new Blob([html], {type: 'text/html'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'AFLOR_ROI_Dashboard.html';
+            a.click();
+        }
+
+
+        window.onload = calcular;
+    </script>
+</body>
+</html>
